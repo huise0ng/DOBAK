@@ -107,6 +107,14 @@ export default {
         }
 
         this.betResult = resultMessage;
+
+        // 베팅 기록을 최대 5개로 유지
+        if (this.betHistory.length >= 5) {
+          // 가장 오래된 기록을 제거
+          this.betHistory.shift();
+        }
+
+        // 새 기록을 배열 끝에 추가
         this.betHistory.push({
           result: win ? '성공' : '실패',
           amount: this.betAmount,
