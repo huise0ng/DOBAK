@@ -87,14 +87,15 @@ export default {
       if (userDoc.exists()) {
         this.balance = userDoc.data().balance;
         this.betHistory = userDoc.data().betHistory || [];
+        const lastUpdated = userDoc.data().lastUpdated ? new Date(userDoc.data().lastUpdated.toDate()) : new Date(0);
 
-        const lastUpdated = userDoc.data().lastUpdated ? new Date(userDoc.data().lastUpdated.toDate()) : null;
         const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); 
         const todayMidnight = new Date(now).setHours(0, 0, 0, 0);
         const today18h = new Date(now).setHours(18, 0, 0, 0);
 
-        if (!lastUpdated || lastUpdated < todayMidnight || (lastUpdated < today18h && now >= today18h)) {
+        const lastUpdatedDay = new Date(lastUpdated).setHours(0, 0, 0, 0);
+
+        if (lastUpdated < todayMidnight || (lastUpdatedDay === todayMidnight && lastUpdated < today18h && now >= today18h)) {
           this.balance += 10000;
           await updateDoc(userDocRef, { balance: this.balance, lastUpdated: serverTimestamp() });
         }
@@ -112,6 +113,9 @@ export default {
       this.winProbability = Math.floor(Math.random() * 61) + 20;
       this.betting = true;
       this.betResult = '';
+
+      // userDocRef를 여기에서 정의합니다.
+      const userDocRef = doc(db, "users", this.user.uid);
 
       setTimeout(async () => {
         const win = Math.random() < (this.winProbability / 100);
@@ -136,11 +140,11 @@ export default {
           balanceAfter: this.balance
         });
 
-        const userDocRef = doc(db, "users", this.user.uid);
         await updateDoc(userDocRef, { balance: this.balance, betHistory: this.betHistory });
         this.betting = false;
       }, 2000);
     },
+
   },
   created() {
     onAuthStateChanged(auth, (user) => {
