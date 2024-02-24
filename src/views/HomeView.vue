@@ -40,6 +40,7 @@
 import { auth, db } from '@/firebase';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
 
 export default {
   name: 'HomeView',
@@ -53,7 +54,7 @@ export default {
       betting: false,
       betResult: '',
       betHistory: [],
-      winProbability: 0, 
+      winProbability: 0,
     };
   },
   computed: {
@@ -86,8 +87,19 @@ export default {
       if (userDoc.exists()) {
         this.balance = userDoc.data().balance;
         this.betHistory = userDoc.data().betHistory || [];
+
+        const lastUpdated = userDoc.data().lastUpdated ? new Date(userDoc.data().lastUpdated.toDate()) : null;
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); 
+        const todayMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const today18h = new Date(now).setHours(18, 0, 0, 0);
+
+        if (!lastUpdated || lastUpdated < todayMidnight || (lastUpdated < today18h && now >= today18h)) {
+          this.balance += 10000;
+          await updateDoc(userDocRef, { balance: this.balance, lastUpdated: serverTimestamp() });
+        }
       } else {
-        await setDoc(userDocRef, { balance: 10000, betHistory: [] });
+        await setDoc(userDocRef, { balance: 10000, betHistory: [], lastUpdated: serverTimestamp() });
         this.balance = 10000;
       }
     },
@@ -97,7 +109,7 @@ export default {
         return;
       }
 
-      this.winProbability = Math.floor(Math.random() * 61) + 20; // 20에서 80 사이의 확률
+      this.winProbability = Math.floor(Math.random() * 61) + 20;
       this.betting = true;
       this.betResult = '';
 
@@ -125,20 +137,16 @@ export default {
         });
 
         const userDocRef = doc(db, "users", this.user.uid);
-        await updateDoc(userDocRef, {
-          balance: this.balance,
-          betHistory: this.betHistory
-        });
-
+        await updateDoc(userDocRef, { balance: this.balance, betHistory: this.betHistory });
         this.betting = false;
       }, 2000);
     },
   },
   created() {
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
       if (user) {
         this.user = user;
-        await this.loadBalance();
+        this.loadBalance();
       } else {
         this.user = null;
         this.balance = 0;
