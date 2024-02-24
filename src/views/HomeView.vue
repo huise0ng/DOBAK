@@ -1,13 +1,12 @@
 <template>
   <div class="home">
-    <h1>가상 도박 게임</h1>
+    <h1>재미로만 즐겨주세요! 가상입니다</h1>
     <div v-if="user">
-      <p>환영합니다, {{ user.email }}!</p>
-      <p>잔액: {{ balance }}원</p>
+      <h3>잔액: {{ balance }}원</h3>
       <input type="number" v-model.number="betAmount" placeholder="베팅 금액" />
       <button @click="placeBet" :disabled="betting">도박하기</button>
       <button @click="signOut">로그아웃</button>
-      <p v-if="betting">도박 중입니다...</p>
+      <p v-if="betting">도박 중입니다... 도박 성공 확률: {{ winProbability }}%</p>
       <p v-if="betResult">{{ betResult }}</p>
       <div v-if="betHistory.length > 0">
         <h2>베팅 기록</h2>
@@ -20,7 +19,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in betHistory" :key="index">
+            <tr v-for="(item, index) in reversedBetHistory" :key="index">
               <td>{{ item.result }}</td>
               <td>{{ item.amount }}</td>
               <td>{{ item.balanceAfter }}</td>
@@ -54,7 +53,13 @@ export default {
       betting: false,
       betResult: '',
       betHistory: [],
+      winProbability: 0, 
     };
+  },
+  computed: {
+    reversedBetHistory() {
+      return [...this.betHistory].reverse();
+    }
   },
   methods: {
     async signIn() {
@@ -92,11 +97,12 @@ export default {
         return;
       }
 
+      this.winProbability = Math.floor(Math.random() * 61) + 20; // 20에서 80 사이의 확률
       this.betting = true;
       this.betResult = '';
 
       setTimeout(async () => {
-        const win = Math.random() < 0.5;
+        const win = Math.random() < (this.winProbability / 100);
         let resultMessage;
         if (win) {
           this.balance += this.betAmount;
@@ -108,13 +114,10 @@ export default {
 
         this.betResult = resultMessage;
 
-        // 베팅 기록을 최대 5개로 유지
         if (this.betHistory.length >= 5) {
-          // 가장 오래된 기록을 제거
           this.betHistory.shift();
         }
 
-        // 새 기록을 배열 끝에 추가
         this.betHistory.push({
           result: win ? '성공' : '실패',
           amount: this.betAmount,
