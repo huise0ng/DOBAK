@@ -1,24 +1,6 @@
-# x
+## 지금 이 글을 보고 있는 여러분도 도박게임에 참가할 수 있습니다.
 
-## Project setup
-```
-npm install
-```
+> 이메일: <b>test@naver.com</b> /  비밀번호: <b>123456</b>
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+다음 분도 참가할 수 있도록 큰돈을 걸지 말아주세요!
